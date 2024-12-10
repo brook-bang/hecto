@@ -1,5 +1,5 @@
 use core::panic;
-use std::{char, fmt::write, ops::{Index, Range}, result, usize};
+use std::{char, fmt::write, ops::{Deref, Index, Range}, option, result, usize};
 use std::fmt;
 
 use unicode_segmentation::UnicodeSegmentation;
@@ -186,13 +186,23 @@ impl Line {
     }
 
     fn byte_idx_to_grapheme_idx(&self,byte_idx: ByteIdx) -> GraphemeIdx {
-        self.fragments.iter().position(||)
+        self.fragments
+        .iter().position(|fragment| fragment.start_byte_idx >= byte_idx)
+        .map_or(0, |grapheme_idx|grapheme_idx)
     }
 
-    pub fn search(&self,query: &str) -> Option<usize> {
+    fn grapheme_idx_to_byte_idx(&self,grapheme_idx: GraphemeIdx) -> ByteIdx {
+        self.fragments.get(grapheme_idx).map_or(0,|fragment|fragment.start_byte_idx )
+    }
+
+    pub fn search(&self, query:&str, from_grapheme_idx: GraphemeIdx) -> Option<GraphemeIdx>{
+        let start_byte_idx = self.grapheme_idx_to_byte_idx(from_grapheme_idx);
         self.string
-        .find(query)
-        .map(|byte_idx| self.byte_idx_to_grapheme_idx(byte_idx))
+        .get(start_byte_idx..)
+        .and_then(|substr| substr.find(query))
+        .map(|byte_idx| {
+            self.byte_idx_to_grapheme_idx(byte_idx.saturating_add(start_byte_idx))
+        })
     }
 
 }
@@ -200,5 +210,13 @@ impl Line {
 impl fmt::Display for Line {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
     write!(formatter, "{}",self.string)
+    }
+}
+
+impl Deref for Line {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.string
     }
 }
