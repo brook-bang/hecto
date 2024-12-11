@@ -26,30 +26,23 @@ impl Buffer {
         })
     }
 
-    pub fn search(&self, query: &str, from: Location) -> Option<Location> {
-        for (line_idx, line) in self.lines.iter().enumerate().skip(from.line_idx) {
-            let from_grapheme_idx = if line_idx == from.line_idx {
-                from.grapheme_idx
-            } else {
-                0
-            };
-
-            if let Some(grapheme_idx) = line.search(query, from_grapheme_idx) {
-                return Some(Location {
-                    grapheme_idx,
-                    line_idx,
-                });
+    pub fn search_forward(&self, query: &str, from: Location) -> Option<Location> {
+        if query.is_empty() {
+            return None;
+        }
+        let mut is_first = true;
+        for (line_idx, line) in self
+            .lines
+            .iter()
+            .enumerate()
+            .cycle()
+            .skip(from.line_idx)
+            .take(self.lines.len().saturating_add(1))
+        {
+            let from_grapheme_idx = if is_first {
+                
             }
         }
-
-        for (line_idx,line) in self.lines.iter().enumerate().take(from.line_idx){
-            if let Some(grapheme_idx) = line.search(query, 0){
-                return Some(Location {
-                    grapheme_idx,
-                    line_idx,
-                });
-            }  
-        }       
         None
     }
 
