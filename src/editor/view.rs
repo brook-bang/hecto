@@ -97,7 +97,7 @@ impl View {
             if query.is_empty() {
                 None
             } else if direction == SearchDirection::Forward {
-                self.buffer.seach_forward(query, from)
+                self.buffer.search_forward(query, from)
             } else {
                 self.buffer.search_backward(query, from)
             }

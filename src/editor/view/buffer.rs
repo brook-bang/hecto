@@ -40,9 +40,58 @@ impl Buffer {
             .take(self.lines.len().saturating_add(1))
         {
             let from_grapheme_idx = if is_first {
-                
+                is_first = false;
+                from.grapheme_idx
+            } else {
+                0
+            };
+
+            if let Some(grapheme_idx) = line.search_forward(query, from_grapheme_idx) {
+                return Some(Location {
+                    grapheme_idx,
+                    line_idx,
+                });
             }
         }
+        None
+    }
+
+    pub fn search_backward(&self, query: &str, from: Location) -> Option<Location> {
+        if query.is_empty() {
+            return None;
+        }
+
+        let mut is_first = true;
+
+        for (line_idx, line) in self
+            .lines
+            .iter()
+            .enumerate()
+            .rev()
+            .cycle()
+            .skip(
+                self.lines
+                    .len()
+                    .saturating_sub(from.line_idx)
+                    .saturating_sub(1),
+            )
+            .take(self.lines.len().saturating_add(1))
+        {
+            let from_grapheme = if is_first {
+                is_first = false;
+                from.grapheme_idx
+            } else {
+                line.grapheme_count()
+            };
+
+            if let Some(grapheme_idx) = line.search_backward(query,from_grapheme){
+                return Some(Location {
+                    grapheme_idx,
+                    line_idx,
+                });
+            }
+        }
+
         None
     }
 
@@ -83,9 +132,7 @@ impl Buffer {
     }
 
     pub fn insert_char(&mut self, character: char, at: Location) {
-        if at.line_idx > self.height() {
-            return;
-        }
+        debug_assert!(at.line_idx <= self.height());
 
         if at.line_idx == self.height() {
             self.lines.push(Line::from(&character.to_string()));
