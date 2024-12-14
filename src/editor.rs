@@ -2,6 +2,7 @@ use crossterm::event::{read, Event, KeyEvent, KeyEventKind};
 use std::{
     env,io::Error, panic::{set_hook, take_hook}
 };
+mod annotatedstring;
 mod command;
 mod commandbar;
 mod documentstatus;
@@ -314,7 +315,7 @@ impl Editor {
                 self.view.search(&query);
             }
             Move(Right | Down) => self.view.search_next(),
-            Move(Up | Left) => self.view.seach_prev(),
+            Move(Up | Left) => self.view.search_prev(),
             System(Quit | Resize(_) | Search | Save ) | Move(_) => {}
         }
     }
