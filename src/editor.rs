@@ -4,27 +4,21 @@ use std::{
 };
 mod annotatedstring;
 mod command;
-mod commandbar;
+mod uicomponent;
 mod documentstatus;
 mod line;
-mod messagebar;
 mod position;
 mod size;
-mod statusbar;
 mod terminal;
-mod uicomponent;
-mod view;
 
-use commandbar::CommandBar;
+use annotatedstring::{AnnotatedString, AnnotationType};
+use uicomponents::{CommandBar,MessageBar,View, StatusBar, UIComponent};
+
 use documentstatus::DocumentStatus;
 use line::Line;
-use messagebar::MessageBar;
 use position::Position;
 use size::Size;
-use statusbar::StatusBar;
 use terminal::Terminal;
-use uicomponent::UIComponent;
-use view::View;
 
 use self::command::{
     Command::{self, Edit, Move, System},

@@ -63,12 +63,72 @@ impl AnnotatedString {
         }
 
         self.annotations.iter_mut().for_each(|annotation| {
-            
+            annotation.start_byte_idx = if annotation.start_byte_idx >= end_byte_idx{
+                if shortened {
+                    annotation.start_byte_idx.saturating_sub(len_difference)
+                } else {
+                    annotation.start_byte_idx.saturating_sub(len_difference)
+                }
+            } else if annotation.start_byte_idx >= start_byte_idx {
+                if shortened {
+                    max(
+                        start_byte_idx,
+                        annotation.start_byte_idx.saturating_sub(len_difference),
+                    )
+                } else {
+                    min(
+                        end_byte_idx,
+                        annotation.start_byte_idx.saturating_add(len_difference),
+                    )
+                }
+            } else {
+                annotation.start_byte_idx
+            };
+
+            annotation.end_byte_idx = if annotation.end_byte_idx >= end_byte_idx {
+                if shortened {
+                    annotation.end_byte_idx.saturating_sub(len_difference)
+                } else {
+                    annotation.end_byte_idx.saturating_add(len_difference)
+                }
+            } else if annotation.end_byte_idx >= start_byte_idx {
+                if shortened {
+                    max(
+                        start_byte_idx,
+                        annotation.end_byte_idx.saturating_sub(len_difference),
+                    )
+                } else {
+                    min(
+                        end_byte_idx,
+                        annotation.end_byte_idx.saturating_add(len_difference)
+                    )
+                }
+            } else {
+                annotation.end_byte_idx
+            }
         });
 
+        self.annotations.retain(|annotation| {
+            annotation.start_byte_idx < annotation.end_byte_idx 
+             && annotation.start_byte_idx < self.string.len()
+        });
+    }    
+}
 
+impl Display for AnnotatedString {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter,"{}", self.string)
     }
+}
 
+impl<'a> IntoIterator for &'a AnnotatedString {
+    type Item = AnnotatedStringPart<'a>;
+    type IntoIter = AnnotatedStringIterator<'a>;
 
-    
+    fn into_iter(self) -> Self::IntoIter {
+        AnnotatedStringIterator {
+            annotated_string: &self,
+            current_idx:0,
+        }
+    }
 }
