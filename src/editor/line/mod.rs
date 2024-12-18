@@ -174,7 +174,7 @@ impl Line {
         self.fragments.len()
     }
 
-    pub fn width_until(&self, grapheme_idx: GraphemeIdx) -> GraphemeIdx {
+    pub fn width_until(&self, grapheme_idx: GraphemeIdx) -> Col {
         self.fragments
             .iter()
             .take(grapheme_idx)
@@ -185,7 +185,7 @@ impl Line {
             .sum()
     }
 
-    pub fn width(&self) -> GraphemeIdx {
+    pub fn width(&self) -> Col {
         self.width_until(self.grapheme_count())
     }
 
@@ -234,26 +234,14 @@ impl Line {
         }
     }
 
-    fn byte_idx_to_grapheme_idx(&self, byte_idx: ByteIdx) -> GraphemeIdx {
-        debug_assert!(byte_idx <= self.string.len());
+    fn byte_idx_to_grapheme_idx(&self, byte_idx: ByteIdx) -> Option<GraphemeIdx> {
+        if byte_idx > self.string.len() {
+            return None;
+        }
         self.fragments
             .iter()
             .position(|fragment| fragment.start_byte_idx >= byte_idx)
-            .map_or_else(
-                || {
-                    #[cfg(debug_assertions)]
-                    {
-                        panic!("Fragment not found for byte index:{byte_idx:?}");
-                    }
-                    #[cfg(not(debug_assertions))]
-                    {
-                        0
-                    }
-                },
-                |grapheme_idx| grapheme_idx,
-            )
     }
-
     fn grapheme_idx_to_byte_idx(&self, grapheme_idx: GraphemeIdx) -> ByteIdx {
         debug_assert!(grapheme_idx <= self.grapheme_count());
 
@@ -289,11 +277,10 @@ impl Line {
 
         let start_byte_idx = self.grapheme_idx_to_byte_idx(from_grapheme_idx);
 
-        self.string
-            .get(start_byte_idx..)
-            .and_then(|substr| substr.find(query))
-            .map(|byte_idx| self.byte_idx_to_grapheme_idx(byte_idx.saturating_add(start_byte_idx)))
-    }
+        self.find_all(query, start_byte_idx..self.string.len())
+            .first()
+            .map(|(_, grapheme_idx)| *grapheme_idx)   
+         }
 
     pub fn search_backward(
         &self,
@@ -312,11 +299,10 @@ impl Line {
             self.grapheme_idx_to_byte_idx(from_grapheme_idx)
         };
 
-        self.string
-            .get(..end_byte_index)
-            .and_then(|substr| substr.match_indices(query).last())
-            .map(|(index, _)| self.byte_idx_to_grapheme_idx(index))
-    }
+        self.find_all(query, 0..end_byte_index)
+            .last()
+            .map(|(_, grapheme_idx)| *grapheme_idx)    
+        }
 
     fn find_all(&self, query: &str, range: Range<ByteIdx>) -> Vec<(ByteIdx, GraphemeIdx)> {
         let end_byte_idx = range.end;
@@ -329,7 +315,7 @@ impl Line {
                     .match_indices(query)
                     .filter_map(|(relative_start_idx, _)| {
                         let absolute_start_idx = relative_start_idx.saturating_add(start_byte_idx);
-                        self.grapheme_idx_to_byte_idx(absolute_start_idx)
+                        self.byte_idx_to_grapheme_idx(absolute_start_idx)
                             .map(|grapheme_idx| (absolute_start_idx, grapheme_idx))
                     })
                     .collect()
@@ -337,7 +323,7 @@ impl Line {
     }
 }
 
-impl fmt::Display for Line {
+impl Display for Line {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter, "{}", self.string)
     }

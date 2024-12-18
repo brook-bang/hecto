@@ -4,7 +4,7 @@ use std::{
 };
 mod annotatedstring;
 mod command;
-mod uicomponent;
+mod uicomponents;
 mod documentstatus;
 mod line;
 mod position;
@@ -16,7 +16,7 @@ use uicomponents::{CommandBar,MessageBar,View, StatusBar, UIComponent};
 
 use documentstatus::DocumentStatus;
 use line::Line;
-use position::Position;
+use position::{Col, Position, Row};
 use size::Size;
 use terminal::Terminal;
 

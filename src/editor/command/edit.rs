@@ -1,5 +1,7 @@
-use crossterm::event::{KeyEvent, KeyModifiers};
-
+use crossterm::event::{
+    KeyCode::{Backspace, Char, Delete, Enter, Tab},
+    KeyEvent, KeyModifiers,
+};
 #[derive(Clone,Copy)]
 pub enum Edit {
     Insert(char),

@@ -4,8 +4,6 @@ use crossterm::event::{
     }, KeyEvent, KeyModifiers,
 };
 
-use super::size::Size;
-
 #[derive(Clone, Copy)]
 pub enum Move {
     PageUp,

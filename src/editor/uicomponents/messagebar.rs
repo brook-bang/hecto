@@ -2,7 +2,8 @@ use std::{io::Error, time::{Duration, Instant}};
 
 use crate::editor::terminal::Terminal;
 
-use super::{size::Size, uicomponent::UIComponent};
+use super::super::Size;
+use super::UIComponent;
 
 const DEFAULT_DURATION: Duration = Duration::new(5, 0);
 

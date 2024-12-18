@@ -1,8 +1,5 @@
-use std::{fmt::format, result};
-
-use super::{
-    documentstatus::DocumentStatus, size::Size, terminal::Terminal, uicomponent::UIComponent
-};
+use super::super::{DocumentStatus, Size, Terminal};
+use super::UIComponent;
 
 #[derive(Default)]
 pub struct StatusBar {

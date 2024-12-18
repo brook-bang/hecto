@@ -1,6 +1,6 @@
 use std::io::Error;
 
-use super::size::Size;
+use crate::editor::size::Size;
 
 pub trait UIComponent {
 
