@@ -1,6 +1,5 @@
-use crate::editor::{line::Line, position::Position};
-
-use super::location::Location;
+use crate::editor::Line;
+use crate::prelude::*;
 
 
 pub struct SearchInfo {
