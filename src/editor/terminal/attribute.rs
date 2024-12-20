@@ -18,6 +18,11 @@ impl From<AnnotationType> for Attribute {
                 foreground: Some(Color::Rgb { r: 255, g: 255, b: 255 }),
                 background: Some(Color::Rgb { r: 255, g: 255, b: 153 }),
             },
+            AnnotationType::Digit => Self {
+                foreground: Some(Color::Rgb { r: 255, g: 99, b: 71 }),
+                background: None
+            },
+            
         }
     }
 }
