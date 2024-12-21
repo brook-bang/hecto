@@ -3,15 +3,28 @@ use std::{
     path::{self, Path, PathBuf},
 };
 
+use crate::editor::filetype::FileType;
+
 #[derive(Default, Debug)]
 pub struct FileInfo {
     path: Option<PathBuf>,
+    file_type: FileType,
 }
 
 impl FileInfo {
     pub fn from(file_name: &str) -> Self {
+        let path = PathBuf::from(file_name);
+        let file_type = if path
+            .extension()
+            .map_or(false, |ext| ext.eq_ignore_ascii_case("rs"))
+        {
+            FileType::Rust
+        } else {
+            FileType::Text
+        };
         Self {
-            path: Some(PathBuf::from(file_name)),
+            path: Some(path),
+            file_type
         }
     }
 
@@ -22,6 +35,12 @@ impl FileInfo {
     pub const fn has_path(&self) -> bool {
         self.path.is_some()
     }
+
+    pub const fn get_file_type(&self) -> FileType {
+        self.file_type
+    }
+
+
 }
 
 impl Display for FileInfo {

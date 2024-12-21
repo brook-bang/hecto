@@ -3,6 +3,7 @@ use crossterm::event::{read, Event, KeyEvent, KeyEventKind};
 use std::{
     env,io::Error, panic::{set_hook, take_hook}
 };
+
 mod annotatedstring;
 pub mod annotationtype;
 mod command;
@@ -13,11 +14,12 @@ mod terminal;
 pub use annotationtype::AnnotationType;
 mod annotation;
 use annotation::Annotation;
-
+mod filetype;
 use annotatedstring::AnnotatedString;
 use uicomponents::{CommandBar,MessageBar,View, StatusBar, UIComponent};
 
 use documentstatus::DocumentStatus;
+use filetype::FileType;
 use line::Line;
 use terminal::Terminal;
 
