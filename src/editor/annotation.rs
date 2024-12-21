@@ -1,5 +1,6 @@
-use crate::{editor::annotatedstring::annotationtype::AnnotationType, prelude::*};
+use crate::prelude::*;
 
+use super::AnnotationType;
 #[derive(Copy,Clone,Debug)]
 #[allow(clippy::struct_field_names)]
 pub struct Annotation{
