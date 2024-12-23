@@ -12,7 +12,6 @@ impl Display for FileType {
         match self {
             Self::Rust => write!(formatter, "Rust"),
             Self::Text => write!(formatter, "Text"),
-            
         }
     }
 }
