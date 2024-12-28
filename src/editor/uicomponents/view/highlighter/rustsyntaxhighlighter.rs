@@ -1,8 +1,14 @@
-use std::{char, collections::HashMap, io::Result, result};
+use std::{char, collections::HashMap, io::Result, result, string};
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::{syntaxhighlighter::{self, SyntaxHighlighter}, Annotation, AnnotationType, Line};
-use crate::{editor::{annotation, line}, prelude::*};
+use super::{
+    syntaxhighlighter::{self, SyntaxHighlighter},
+    Annotation, AnnotationType, Line,
+};
+use crate::{
+    editor::{annotation, line},
+    prelude::*,
+};
 
 const KEYWORDS: [&str; 52] = [
     "break",
@@ -64,38 +70,38 @@ const TYPES: [&str; 22] = [
     "f64", "bool", "char", "Option", "Result", "String", "str", "Vec", "HashMap",
 ];
 
-const KONWN_VALUES: [&str;6] = ["Some", "None", "true", "false", "Ok", "Err"];
+const KONWN_VALUES: [&str; 6] = ["Some", "None", "true", "false", "Ok", "Err"];
 
 #[derive(Default)]
 pub struct RustSyntaxHighlighter {
-    highlights: HashMap<LineIdx,Vec<Annotation>>,
+    highlights: HashMap<LineIdx, Vec<Annotation>>,
 }
 
 impl SyntaxHighlighter for RustSyntaxHighlighter {
     fn highlight(&mut self, idx: LineIdx, line: &Line) {
         let mut result = Vec::new();
 
-        for (start_idx, word) in line.split_word_bound_indices(){
-            let mut annotation_type = None;
-            if is_valid_number(word) {
-                annotation_type = Some(AnnotationType::Number);
-            } else if is_keyword(word) {
-                annotation_type = Some(AnnotationType::Keyword);
-            } else if is_type(word) {
-                annotation_type = Some(AnnotationType::Type);
-            } else if is_known_value(word) {
-                annotation_type = Some(AnnotationType::KnownValue);
-            }
-            if let Some(annotation_type) = annotation_type {
-                result.push(Annotation {
-                    annotation_type,
-                    start:start_idx,
-                    end: start_idx.saturating_add(word.len()),
-                });
-            }
+        let mut iterator = line.split_word_bound_indices().peekable();
+        while let Some((start_idx, _)) = iterator.next() {
+            let remainder = &line[start_idx..];
+            if let Some(mut annotation) = annotate_char(remainder)
+                .or_else(|| annotate_number(remainder))
+                .or_else(|| annotate_keyword(remainder))
+                .or_else(|| annotate_type(remainder))
+                .or_else(|| annotate_known_value(remainder))
+            {
+                annotation.shift(start_idx);
+                result.push(annotation);
+
+                while let Some(&(next_idx, _)) = iterator.peek() {
+                    if next_idx >= annotation.end {
+                        break;
+                    }
+                    iterator.next();
+                }
+            };
         }
-        
-        self.highlights.insert(idx, result); 
+        self.highlights.insert(idx, result);
     }
 
     fn get_annotations(&self, idx: LineIdx) -> Option<&Vec<Annotation>> {
@@ -103,8 +109,64 @@ impl SyntaxHighlighter for RustSyntaxHighlighter {
     }
 }
 
+fn annotation_next_word<F>(
+    string: &str,
+    annotation_type: AnnotationType,
+    validator: F,
+) -> Option<Annotation>
+where
+    F: Fn(&str) -> bool,
+{
+    if let Some(word) = string.split_word_bounds().next() {
+        if validator(word) {
+            return Some(Annotation {
+                annotation_type,
+                start: 0,
+                end: word.len(),
+            });
+        }
+    }
+    None
+}
+
+fn annotate_number(string: &str) -> Option<Annotation> {
+    annotation_next_word(string, AnnotationType::Number, is_valid_number)
+}
+
+fn annotate_type(string: &str) -> Option<Annotation> {
+    annotation_next_word(string, AnnotationType::Type, is_type)
+}
+
+fn annotate_keyword(string: &str) -> Option<Annotation> {
+    annotation_next_word(string, AnnotationType::Keyword, is_keyword)
+}
+
+fn annotate_known_value(string: &str) -> Option<Annotation> {
+    annotation_next_word(string, AnnotationType::KnownValue, is_known_value)
+}
+
+fn annotate_char(string: &str) -> Option<Annotation> {
+    let mut iter = string.split_word_bound_indices().peekable();
+    if let Some((_, "\'")) = iter.next() {
+        if let Some((_, "\\")) = iter.peek() {
+            iter.next();
+        }
+
+        iter.next();
+
+        if let Some((idx, "\'")) = iter.next() {
+            return Some(Annotation {
+                annotation_type: AnnotationType::Char,
+                start: 0,
+                end: idx.saturating_add(1),
+            });
+        }
+    }
+    None
+}
+
 fn is_valid_number(word: &str) -> bool {
-    if word.is_empty(){
+    if word.is_empty() {
         return false;
     }
 
@@ -130,7 +192,7 @@ fn is_valid_number(word: &str) -> bool {
                 prev_was_digit = true;
             }
             '_' => {
-                if !prev_was_digit  {
+                if !prev_was_digit {
                     return false;
                 }
                 prev_was_digit = false;
@@ -144,7 +206,7 @@ fn is_valid_number(word: &str) -> bool {
                 prev_was_digit = false;
             }
 
-            'e'|'E' => {
+            'e' | 'E' => {
                 if seen_e || !prev_was_digit {
                     return false;
                 }
@@ -155,7 +217,6 @@ fn is_valid_number(word: &str) -> bool {
             _ => {
                 return false;
             }
-            
         }
     }
     prev_was_digit
@@ -193,5 +254,3 @@ fn is_type(word: &str) -> bool {
 fn is_known_value(word: &str) -> bool {
     KONWN_VALUES.contains(&word)
 }
-
-
